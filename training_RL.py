@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import time
 from Maze_env import Maze_env  
 
 # Paramètres Q-Learning
@@ -44,11 +45,15 @@ def train_q_learning():
             
             total_reward += reward  # Accumuler les récompenses
             state_pos = next_pos
-            
+
+            # Affichage temps réel tous les N épisodes
+            if (episode + 1) % 10 == 0:  # Afficher tous les 10 épisodes
+                env.render()
+                time.sleep(0.1)  # Pause pour observer (ajustable)
+
         rewards_per_episode.append(total_reward)  # Enregistrer la récompense totale
-        print(f"Épisode {episode + 1}/{episodes} - Récompense : {total_reward}")
-
+        #print(f"Épisode {episode + 1}/{episodes} - Récompense : {total_reward}")
+        
     print("Entraînement terminé.")
-
     return q_table
 

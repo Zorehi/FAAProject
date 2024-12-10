@@ -126,6 +126,6 @@ def generate_obstacles(grid_size, start_pos, goal_pos, num_obstacles):
                 obstacles.add(pos)'''
         
         obstacles.add((1, 1))
-        obstacles.add((2, 0))
+        #obstacles.add((2, 0))
         
         return list(obstacles)
