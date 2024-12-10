@@ -29,6 +29,8 @@ class Maze_env(gym.Env):
         # Position de l'agent : choisie dans les constantes
         self.agent_pos = self.start_pos
 
+        self.obstacles = generate_obstacles(self.grid_size, self.start_pos, self.goal_pos, 10)
+
         # Pygame setup
         pygame.init()
         self.cell_size = 100
@@ -41,8 +43,6 @@ class Maze_env(gym.Env):
         self.state = np.zeros(self.grid_size)
         self.state[self.start_pos] = 1
         self.agent_pos = self.start_pos
-
-        self.obstacles = generate_obstacles(self.grid_size, self.start_pos, self.goal_pos, 5)
 
         for obstacle in self.obstacles:
             self.state[obstacle] = -1
@@ -115,17 +115,51 @@ class Maze_env(gym.Env):
 
 
 def generate_obstacles(grid_size, start_pos, goal_pos, num_obstacles):
-        obstacles = set()
-        
-        '''while len(obstacles) < num_obstacles:
-            # Générer une position aléatoire dans la grille
-            pos = (random.randint(0, grid_size[0] - 1), random.randint(0, grid_size[1] - 1))
-            
-            # Vérifier que la position n'est ni le départ, ni l'objectif, ni déjà un obstacle
-            if pos != start_pos and pos != goal_pos:
-                obstacles.add(pos)'''
-        
-        obstacles.add((1, 1))
-        #obstacles.add((2, 0))
-        
-        return list(obstacles)
+    """
+    Génère des obstacles cohérents en garantissant un chemin du départ à l'arrivée.
+    Utilise un algorithme DFS pour éviter les blocages.
+    """
+    obstacles = set()
+    path = []
+    visited = set()
+    stack = [start_pos]  # Pile pour suivre le chemin
+
+    # Étape 1 : Générer un chemin valide avec DFS
+    while stack:
+        current_pos = stack[-1]
+        visited.add(current_pos)
+        path.append(current_pos)
+
+        if current_pos == goal_pos:
+            break  # Chemin complet atteint l'objectif
+
+        y, x = current_pos
+
+        # Trouver les mouvements valides non visités
+        possible_moves = []
+        if y > 0 and (y - 1, x) not in visited:  # Haut
+            possible_moves.append((y - 1, x))
+        if y < grid_size[0] - 1 and (y + 1, x) not in visited:  # Bas
+            possible_moves.append((y + 1, x))
+        if x > 0 and (y, x - 1) not in visited:  # Gauche
+            possible_moves.append((y, x - 1))
+        if x < grid_size[1] - 1 and (y, x + 1) not in visited:  # Droite
+            possible_moves.append((y, x + 1))
+
+        # Si aucun mouvement valide, revenir en arrière
+        if not possible_moves:
+            stack.pop()
+            path.pop()
+        else:
+            next_pos = random.choice(possible_moves)
+            stack.append(next_pos)
+
+    # Étape 2 : Générer des obstacles en dehors du chemin garanti
+    escape = 0
+    while len(obstacles) < num_obstacles and escape < 1000:
+        pos = (random.randint(0, grid_size[0] - 1), random.randint(0, grid_size[1] - 1))
+        if pos not in path and pos != start_pos and pos != goal_pos:
+            obstacles.add(pos)
+        escape += 1
+
+    return obstacles
