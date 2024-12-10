@@ -83,8 +83,6 @@ class Maze_env(gym.Env):
         else:
             reward = self.compute_reward(previous_pos, self.agent_pos)
 
-        print(reward)
-
         return self.state, reward, done
     
     def compute_reward(self, previous_pos, new_pos):
@@ -117,26 +115,17 @@ class Maze_env(gym.Env):
 
 
 def generate_obstacles(grid_size, start_pos, goal_pos, num_obstacles):
-        """
-        Génère des obstacles dans une grille.
-        
-        Paramètres :
-            grid_size (tuple) : Taille de la grille (rows, cols).
-            start_pos (tuple) : Position de départ (y, x).
-            goal_pos (tuple) : Position de l'objectif (y, x).
-            num_obstacles (int) : Nombre d'obstacles à générer.
-        
-        Retourne :
-            List[tuple] : Liste des positions des obstacles.
-        """
         obstacles = set()
         
-        while len(obstacles) < num_obstacles:
+        '''while len(obstacles) < num_obstacles:
             # Générer une position aléatoire dans la grille
             pos = (random.randint(0, grid_size[0] - 1), random.randint(0, grid_size[1] - 1))
             
             # Vérifier que la position n'est ni le départ, ni l'objectif, ni déjà un obstacle
             if pos != start_pos and pos != goal_pos:
-                obstacles.add(pos)
+                obstacles.add(pos)'''
+        
+        obstacles.add((1, 1))
+        obstacles.add((2, 0))
         
         return list(obstacles)
