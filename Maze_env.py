@@ -1,6 +1,7 @@
 import gym
 from gym import spaces
 import numpy as np
+import pygame
 
 class BasicEnv(gym.Env):
     def __init__(self, grid_size=(5, 5), start_pos=(0, 0), goal_pos=(4, 4)):
@@ -15,6 +16,13 @@ class BasicEnv(gym.Env):
         self.state = np.zeros(grid_size)
         self.state[self.start_pos] = 1
         self.agent_pos = self.start_pos
+
+        # Pygame setup
+        pygame.init()
+        self.cell_size = 100
+        self.screen_size = (self.grid_size[1] * self.cell_size, self.grid_size[0] * self.cell_size)
+        self.screen = pygame.display.set_mode(self.screen_size)
+        pygame.display.set_caption('Basic Environment')
 
     def reset(self):
         self.state = np.zeros(self.grid_size)
@@ -44,9 +52,22 @@ class BasicEnv(gym.Env):
         return self.state, reward, done, {}
 
     def render(self, mode='human'):
-        for row in self.state:
-            print(' '.join(['A' if cell == 1 else '.' for cell in row]))
-        print()
+        self.screen.fill((255, 255, 255))  # White background
+
+        for y in range(self.grid_size[0]):
+            for x in range(self.grid_size[1]):
+                rect = pygame.Rect(x * self.cell_size, y * self.cell_size, self.cell_size, self.cell_size)
+                if (y, x) == self.agent_pos:
+                    pygame.draw.rect(self.screen, (0, 0, 255), rect)  # Blue for agent
+                elif (y, x) == self.goal_pos:
+                    pygame.draw.rect(self.screen, (0, 255, 0), rect)  # Green for goal
+                else:
+                    pygame.draw.rect(self.screen, (200, 200, 200), rect, 1)  # Grey for grid
+
+        pygame.display.flip()
+
+    def close(self):
+        pygame.quit()
 
 # Example usage
 if __name__ == "__main__":
@@ -56,8 +77,13 @@ if __name__ == "__main__":
 
     done = False
     while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+
         action = env.action_space.sample()  # Random action
         state, reward, done, _ = env.step(action)
         env.render()
-        if done:
-            print("Goal reached!")
+        pygame.time.wait(100)  # Wait for 50 milliseconds
+
+    env.close()
