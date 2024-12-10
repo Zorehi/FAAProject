@@ -4,9 +4,10 @@ import numpy as np
 import pygame
 import random 
 
-GRID_SIZE = (7,7)
+GRID_SIZE = (10,10)
 START_POS = (0, 0)
-GOAL_POS = (6,3)
+GOAL_POS = (8,5)
+OBSTACLES = 50
 
 class Maze_env(gym.Env):
     def __init__(self, grid_size=GRID_SIZE, start_pos=START_POS, goal_pos=GOAL_POS):
@@ -30,7 +31,7 @@ class Maze_env(gym.Env):
         self.agent_pos = self.start_pos
         
 
-        self.obstacles = generate_obstacles(self.grid_size, self.start_pos, self.goal_pos, 50)
+        self.obstacles = generate_obstacles(self.grid_size, self.start_pos, self.goal_pos, OBSTACLES)
         #self.obstacles = testing_obstacles()
 
         # Pygame setup
@@ -86,11 +87,11 @@ class Maze_env(gym.Env):
         #Calcul de la récompense et de la fin de l'épisode
         done = self.agent_pos == self.goal_pos  #L'épisode est terminé si l'agent atteint l'objectif
 
-        
+        min_go_back = self.grid_size[0] // 2
         #Récompense : 1 si l'épisode est terminé, sinon appel de la fonction compute_reward
         if done:
             reward = 1
-        elif len(self.path) > 3 and self.agent_pos in self.path[:-3] : #Si l'agent revient sur ses pas, récompense négative : évite les boucles ou le blocage
+        elif len(self.path) > min_go_back and self.agent_pos in self.path[:-min_go_back] : #Si l'agent revient sur ses pas, récompense négative : évite les boucles ou le blocage
             reward = -0.2
         else:
             reward = self.compute_reward(previous_pos, self.agent_pos)
