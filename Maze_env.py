@@ -54,6 +54,7 @@ class Maze_env(gym.Env):
         #Fonction qui permet de faire avancer l'agent
 
         #Calcul de la nouvelle position de l'agent en fonction de l'action choisie
+        previous_pos = self.agent_pos
         new_pos = list(self.agent_pos)
 
         if action == 0:  # haut
@@ -72,13 +73,27 @@ class Maze_env(gym.Env):
             self.agent_pos = tuple(new_pos)  # Mettre à jour la position
             self.state[self.agent_pos] = 1  # Mettre à jour la nouvelle position
 
+
         #Calcul de la récompense et de la fin de l'épisode
         done = self.agent_pos == self.goal_pos  #L'épisode est terminé si l'agent atteint l'objectif
 
-        #Récompense : 1 si l'épisode est terminé, 0 sinon
-        reward = 1 if done else 0               
+        #Récompense : 1 si l'épisode est terminé, sinon appel de la fonction compute_reward
+        if done:
+            reward = 1
+        else:
+            reward = self.compute_reward(previous_pos, self.agent_pos)
+
+        print(reward)
 
         return self.state, reward, done
+    
+    def compute_reward(self, previous_pos, new_pos):
+        #Calcul de la récompense en fonction de la distance euclidienne entre la nouvelle position et la position de l'objectif
+
+        dist_new = np.linalg.norm(np.array(new_pos) - np.array(self.goal_pos))
+        dist_old = np.linalg.norm(np.array(previous_pos) - np.array(self.goal_pos))
+
+        return dist_old - dist_new
 
     def render(self, mode='human'):
         #Fonction pour afficher l'environnement avec Pygame
@@ -125,26 +140,3 @@ def generate_obstacles(grid_size, start_pos, goal_pos, num_obstacles):
                 obstacles.add(pos)
         
         return list(obstacles)
-
-
-# Example usage
-if __name__ == "__main__":
-    env = Maze_env()
-    env.reset()
-    env.render()
-
-    done = False
-
-    while not done:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                done = True
-
-        if not done:
-            action = env.action_space.sample()  # Random action
-            state, reward, done = env.step(action)
-            env.render()
-            pygame.time.wait(100)  # Wait for 100 milliseconds
-
-
-    env.close()
