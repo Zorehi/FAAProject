@@ -4,9 +4,9 @@ import numpy as np
 import pygame
 import random 
 
-GRID_SIZE = (5, 5)
+GRID_SIZE = (7,7)
 START_POS = (0, 0)
-GOAL_POS = (4, 4)
+GOAL_POS = (6,3)
 
 class Maze_env(gym.Env):
     def __init__(self, grid_size=GRID_SIZE, start_pos=START_POS, goal_pos=GOAL_POS):
@@ -28,8 +28,10 @@ class Maze_env(gym.Env):
 
         # Position de l'agent : choisie dans les constantes
         self.agent_pos = self.start_pos
+        
 
-        self.obstacles = generate_obstacles(self.grid_size, self.start_pos, self.goal_pos, 10)
+        self.obstacles = generate_obstacles(self.grid_size, self.start_pos, self.goal_pos, 50)
+        #self.obstacles = testing_obstacles()
 
         # Pygame setup
         pygame.init()
@@ -43,6 +45,7 @@ class Maze_env(gym.Env):
         self.state = np.zeros(self.grid_size)
         self.state[self.start_pos] = 1
         self.agent_pos = self.start_pos
+        self.path = [self.agent_pos]
 
         for obstacle in self.obstacles:
             self.state[obstacle] = -1
@@ -67,21 +70,32 @@ class Maze_env(gym.Env):
             new_pos[1] = min(self.agent_pos[1] + 1, self.grid_size[1] - 1)
 
 
+        print(self.agent_pos)
+
         # Vérifier si la nouvelle position est un obstacle
         if self.state[tuple(new_pos)] != -1.0:  # Si ce n'est pas un obstacle
             self.state[self.agent_pos] = 0  # Effacer l'ancienne position
             self.agent_pos = tuple(new_pos)  # Mettre à jour la position
             self.state[self.agent_pos] = 1  # Mettre à jour la nouvelle position
+            self.path.append(self.agent_pos)  # Ajouter la nouvelle position au chemin
+        else :
+            reward = -1
 
+        #print(self.path)
 
         #Calcul de la récompense et de la fin de l'épisode
         done = self.agent_pos == self.goal_pos  #L'épisode est terminé si l'agent atteint l'objectif
 
+        
         #Récompense : 1 si l'épisode est terminé, sinon appel de la fonction compute_reward
         if done:
             reward = 1
+        elif len(self.path) > 3 and self.agent_pos in self.path[:-3] : #Si l'agent revient sur ses pas, récompense négative : évite les boucles ou le blocage
+            reward = -0.2
         else:
             reward = self.compute_reward(previous_pos, self.agent_pos)
+
+        print(reward)
 
         return self.state, reward, done
     
@@ -91,7 +105,7 @@ class Maze_env(gym.Env):
         dist_new = np.linalg.norm(np.array(new_pos) - np.array(self.goal_pos))
         dist_old = np.linalg.norm(np.array(previous_pos) - np.array(self.goal_pos))
 
-        return dist_old - dist_new
+        return (dist_old - dist_new)*0.2
 
     def render(self, mode='human'):
         #Fonction pour afficher l'environnement avec Pygame
@@ -161,5 +175,25 @@ def generate_obstacles(grid_size, start_pos, goal_pos, num_obstacles):
         if pos not in path and pos != start_pos and pos != goal_pos:
             obstacles.add(pos)
         escape += 1
+
+    return obstacles
+
+def testing_obstacles():
+    obstacles = set()
+
+    #obstacles : 10,11,12,22,32,42,52,53,54,44,34,24,14 :
+    obstacles.add((1,0))
+    obstacles.add((1,1))
+    obstacles.add((1,2))
+    obstacles.add((2,2))
+    obstacles.add((3,2))
+    obstacles.add((4,2))
+    obstacles.add((5,2))
+    obstacles.add((5,3))
+    obstacles.add((5,4))
+    obstacles.add((4,4))
+    obstacles.add((3,4))
+    obstacles.add((2,4))
+    obstacles.add((1,4))
 
     return obstacles

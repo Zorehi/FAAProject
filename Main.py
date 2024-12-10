@@ -16,6 +16,7 @@ if __name__ == "__main__":
 
     state = env.reset()
 
+
     while not done:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
