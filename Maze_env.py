@@ -10,13 +10,13 @@ GOAL_POS = (8,5)
 OBSTACLES = 50
 
 class Maze_env(gym.Env):
-    def __init__(self, grid_size=GRID_SIZE, start_pos=START_POS, goal_pos=GOAL_POS, use_pygame=True):
+    def __init__(self, grid_size=GRID_SIZE, start_pos=START_POS, goal_pos=GOAL_POS):
         #Environnement héritant de la classe gym.Env
         super(Maze_env, self).__init__()       
         self.grid_size = grid_size              #Initialisation des attributs de la classe
         self.start_pos = start_pos
         self.goal_pos = goal_pos
-        self.use_pygame = use_pygame
+        
 
         self.action_space = spaces.Discrete(4)  # 4 actions: haut, bas, gauche, droite
 
@@ -34,8 +34,6 @@ class Maze_env(gym.Env):
         self.obstacles = generate_obstacles(self.grid_size, self.start_pos, self.goal_pos, OBSTACLES)
         #self.obstacles = testing_obstacles()
 
-        if self.use_pygame:
-            self.setup_pygame()
 
 
     def setup_pygame(self):

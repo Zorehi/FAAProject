@@ -13,8 +13,10 @@ if __name__ == "__main__":
     if Q:
         q_table = train_q_learning(env, plot_rewards=False, show_training=False)
 
-    state = env.reset()
 
+    env.setup_pygame()
+    state = env.reset()
+    env.render()
 
     while not done:
         for event in pygame.event.get():
