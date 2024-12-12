@@ -65,6 +65,7 @@ class Maze_env(gym.Env):
         #Calcul de la nouvelle position de l'agent en fonction de l'action choisie
         previous_pos = self.agent_pos
         new_pos = list(self.agent_pos)
+        reward = 0
 
         if action == 0:  # haut
             new_pos[0] = max(self.agent_pos[0] - 1, 0)
@@ -85,7 +86,6 @@ class Maze_env(gym.Env):
         else :
             reward = -1
 
-
         #Calcul de la récompense et de la fin de l'épisode
         done = self.agent_pos == self.goal_pos  #L'épisode est terminé si l'agent atteint l'objectif
 
@@ -96,7 +96,7 @@ class Maze_env(gym.Env):
         elif len(self.path) > min_go_back and self.agent_pos in self.path[:-min_go_back] : #Si l'agent revient sur ses pas, récompense négative : évite les boucles ou le blocage
             reward = -0.2
         else:
-            reward = self.compute_reward(previous_pos, self.agent_pos)
+            reward += self.compute_reward(previous_pos, self.agent_pos)
 
         return self.state, reward, done
     
@@ -129,8 +129,6 @@ class Maze_env(gym.Env):
         if self.use_pygame:
             pygame.display.quit()
             pygame.quit()
-            self.use_pygame = False  # Désactiver l'utilisation de Pygame
-
 
 def generate_obstacles(grid_size, start_pos, goal_pos, num_obstacles):
     """
