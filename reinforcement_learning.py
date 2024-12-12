@@ -55,7 +55,7 @@ def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EP
         rewards_per_episode.append(total_reward)  # Enregistrer la récompense totale
         #print(f"Épisode {episode + 1}/{episodes} - Récompense : {total_reward}")
         
-    print("Entraînement terminé.")
+    print("Entraînement Q terminé.")
     pygame.display.quit()  # Quitter proprement Pygame après affichage
 
 
@@ -64,7 +64,43 @@ def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EP
 
     return q_table
 
+def train_sarsa(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODES, plot_rewards=False, show_training=False):
+    """
+    Entraîne l'agent avec l'algorithme SARSA.
+    Retourne la Q-Table entraînée et les récompenses cumulées.
+    """
+    q_table = np.zeros((env.grid_size[0], env.grid_size[1], env.action_space.n))  # Initialisation de la Q-Table
+    rewards_per_episode = []  # Stockage des récompenses
 
+    for episode in range(episodes):
+        state = env.reset()
+        state_pos = env.agent_pos
+        action = choose_action(state_pos, epsilon, env, q_table)
+        total_reward = 0
+        done = False
+
+        while not done:
+            next_state, reward, done = env.step(action)
+            next_pos = env.agent_pos
+            next_action = choose_action(next_pos, epsilon, env, q_table)  # Choisir a' selon epsilon-greedy
+
+            # Mettre à jour la Q-Table selon SARSA
+            y, x = state_pos
+            next_y, next_x = next_pos
+            q_table[y, x, action] += alpha * (
+                reward + gamma * q_table[next_y, next_x, next_action] - q_table[y, x, action]
+            )
+
+            state_pos = next_pos  # Mettre à jour l'état
+            action = next_action  # Mettre à jour l'action
+            total_reward += reward
+
+        rewards_per_episode.append(total_reward)  # Enregistrer la récompense totale de l'épisode
+        #print(f"Épisode {episode + 1}/{episodes} - Récompense : {total_reward}")
+
+    print("Entraînement SARSA terminé.")
+
+    return q_table
 
 def show_final_solution(env, q_table):
     """

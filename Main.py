@@ -1,9 +1,11 @@
 from Maze_env import Maze_env
-from reinforcement_learning import train_q_learning
+from reinforcement_learning import train_q_learning, train_sarsa
 import pygame
 import numpy as np
 
-Q = True
+# Un doit être True et l'autre False, si les deux sont True, SARSA sera executé
+Q = False
+SARSA = True
 
 if __name__ == "__main__":
     env = Maze_env()
@@ -11,8 +13,10 @@ if __name__ == "__main__":
     done = False
 
     if Q:
-        q_table = train_q_learning(env, plot_rewards=False, show_training=False)
+        q_table_q = train_q_learning(env, plot_rewards=False, show_training=False)
 
+    if SARSA:
+        q_table_sarsa = train_sarsa(env, plot_rewards=True, show_training=True)
 
     env.setup_pygame()
     state = env.reset()
@@ -26,17 +30,25 @@ if __name__ == "__main__":
         if Q :
             if not done:
                 y, x = state_pos
-                action = np.argmax(q_table[y, x])  # Exploitation totale
+                action = np.argmax(q_table_q[y, x])  # Exploitation totale
                 state, reward, done = env.step(action)
                 env.render()
                 state_pos = env.agent_pos
                 pygame.time.wait(500)  # Wait for 100 milliseconds
+
+        if SARSA:
+            if not done:
+                y, x = state_pos
+                action = np.argmax(q_table_sarsa[y, x])
+                state, reward, done = env.step(action)
+                env.render()
+                state_pos = env.agent_pos
+                pygame.time.wait(500)
         else :
             if not done:
                 action = env.action_space.sample()  # Random action
                 state, reward, done = env.step(action)
                 env.render()
                 pygame.time.wait(500)
-
 
     env.close()
