@@ -9,7 +9,7 @@ import sys
 ALPHA = 0.1  # Taux d'apprentissage
 GAMMA = 0.9  # Facteur de discount
 EPSILON = 0.1  # Exploration (epsilon-greedy)
-EPISODES = 20  # Nombre d'épisodes d'entraînement
+EPISODES = 100  # Nombre d'épisodes d'entraînement
 
 def choose_action(state, epsilon, env, q_table):
     """Choisir une action selon la stratégie epsilon-greedy."""
@@ -47,6 +47,7 @@ def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EP
 
             # Affichage temps réel tous les N épisodes
             if show_training:
+                env.setup_pygame()
                 if (episode + 1) % 10 == 0:  # Afficher tous les 10 épisodes
                     env.render()
                     time.sleep(0.1)  # Pause pour observer (ajustable)
