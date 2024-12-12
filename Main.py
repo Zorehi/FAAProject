@@ -3,7 +3,7 @@ from reinforcement_learning import train_q_learning, train_sarsa
 import pygame
 import numpy as np
 
-# Un doit être True et l'autre False, si les deux sont True, SARSA sera executé
+# Un doit être True et l'autre False, si les deux sont True, Q-learning sera executé
 Q = False
 SARSA = True
 
@@ -13,10 +13,9 @@ if __name__ == "__main__":
     done = False
 
     if Q:
-        q_table_q = train_q_learning(env, plot_rewards=False, show_training=False)
-
-    if SARSA:
-        q_table_sarsa = train_sarsa(env, plot_rewards=True, show_training=True)
+        q_table_q, _ = train_q_learning(env, show_training=False)
+    elif SARSA:
+        q_table_sarsa, _ = train_sarsa(env, show_training=False)
 
     env.setup_pygame()
     state = env.reset()
@@ -35,8 +34,7 @@ if __name__ == "__main__":
                 env.render()
                 state_pos = env.agent_pos
                 pygame.time.wait(500)  # Wait for 100 milliseconds
-
-        if SARSA:
+        elif SARSA:
             if not done:
                 y, x = state_pos
                 action = np.argmax(q_table_sarsa[y, x])
