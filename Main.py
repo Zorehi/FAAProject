@@ -11,7 +11,7 @@ if __name__ == "__main__":
     done = False
 
     if Q:
-        q_table = train_q_learning(env, plot_rewards=False, show_path=False)
+        q_table = train_q_learning(env, plot_rewards=False, show_training=False)
 
     state = env.reset()
 
