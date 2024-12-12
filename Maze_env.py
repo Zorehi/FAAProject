@@ -10,13 +10,13 @@ GOAL_POS = (8,5)
 OBSTACLES = 50
 
 class Maze_env(gym.Env):
-    def __init__(self, grid_size=GRID_SIZE, start_pos=START_POS, goal_pos=GOAL_POS):
+    def __init__(self, grid_size=GRID_SIZE, start_pos=START_POS, goal_pos=GOAL_POS, use_pygame=True):
         #Environnement héritant de la classe gym.Env
         super(Maze_env, self).__init__()       
         self.grid_size = grid_size              #Initialisation des attributs de la classe
         self.start_pos = start_pos
         self.goal_pos = goal_pos
-        
+        self.use_pygame = use_pygame
 
         self.action_space = spaces.Discrete(4)  # 4 actions: haut, bas, gauche, droite
 
@@ -29,20 +29,27 @@ class Maze_env(gym.Env):
 
         # Position de l'agent : choisie dans les constantes
         self.agent_pos = self.start_pos
-        
+        self.path = [self.agent_pos]
 
         self.obstacles = generate_obstacles(self.grid_size, self.start_pos, self.goal_pos, OBSTACLES)
         #self.obstacles = testing_obstacles()
 
-        # Pygame setup
+        if self.use_pygame:
+            self.setup_pygame()
+
+
+    def setup_pygame(self):
+        #Initialisation de Pygame pour afficher l'environnement
         pygame.init()
         self.cell_size = 100
         self.screen_size = (self.grid_size[1] * self.cell_size, self.grid_size[0] * self.cell_size)
         self.screen = pygame.display.set_mode(self.screen_size)
-        pygame.display.set_caption('Basic Environment')
+        pygame.display.set_caption('Maze Environment')
+        self.use_pygame = True
 
     def reset(self):
         #Réinitialisation de l'environnement au début de chaque épisode
+
         self.state = np.zeros(self.grid_size)
         self.state[self.start_pos] = 1
         self.agent_pos = self.start_pos
@@ -71,8 +78,6 @@ class Maze_env(gym.Env):
             new_pos[1] = min(self.agent_pos[1] + 1, self.grid_size[1] - 1)
 
 
-        print(self.agent_pos)
-
         # Vérifier si la nouvelle position est un obstacle
         if self.state[tuple(new_pos)] != -1.0:  # Si ce n'est pas un obstacle
             self.state[self.agent_pos] = 0  # Effacer l'ancienne position
@@ -82,7 +87,6 @@ class Maze_env(gym.Env):
         else :
             reward = -1
 
-        #print(self.path)
 
         #Calcul de la récompense et de la fin de l'épisode
         done = self.agent_pos == self.goal_pos  #L'épisode est terminé si l'agent atteint l'objectif
@@ -95,8 +99,6 @@ class Maze_env(gym.Env):
             reward = -0.2
         else:
             reward = self.compute_reward(previous_pos, self.agent_pos)
-
-        print(reward)
 
         return self.state, reward, done
     
@@ -126,7 +128,10 @@ class Maze_env(gym.Env):
         pygame.display.flip()
 
     def close(self):
-        pygame.quit()
+        if self.use_pygame:
+            pygame.display.quit()
+            pygame.quit()
+            self.use_pygame = False  # Désactiver l'utilisation de Pygame
 
 
 def generate_obstacles(grid_size, start_pos, goal_pos, num_obstacles):
