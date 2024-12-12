@@ -1,45 +1,52 @@
 import gym
+from PIL.FontFile import WIDTH
 from gym import spaces
 import numpy as np
 import pygame
 import random
+
+WIDTH, HEIGHT = 800, 600
+CELL_SIZE = 40
+START_POS = (0, 0)
 
 class MazeEnv(gym.Env):
     def __init__(self):
         super(MazeEnv, self).__init__()
 
         # Dimensions du labyrinthe
-        self.WIDTH, self.HEIGHT = 800, 600
-        self.CELL_SIZE = 40
-        self.ROWS, self.COLS = self.HEIGHT // self.CELL_SIZE, self.WIDTH // self.CELL_SIZE
+        self.width, self.height = WIDTH, HEIGHT
+        self.cell_size = CELL_SIZE
+        self.rows, self.cols = self.height // self.cell_size, self.width // self.cell_size
+        self.start_pos = START_POS
 
         # Espaces d'actions et d'observations
         self.action_space = spaces.Discrete(4)  # 0: Up, 1: Down, 2: Left, 3: Right
         self.observation_space = spaces.Box(
-            low=0, high=1, shape=(self.ROWS, self.COLS, 1), dtype=np.float32
+            low=0, high=1, shape=(self.rows, self.cols, 1), dtype=np.float32
         )
 
         # Initialisation de l'état
         self.maze = self.generate_maze()
-        self.player_pos = [0, 0]  # Position initiale
-        self.target_pos = [self.COLS - 1, self.ROWS - 1]  # Cible
+        self.agent_pos = [0, 0]  # Position initiale
+        self.target_pos = [self.cols - 1, self.rows - 1]  # Cible
+        self.path = [self.agent_pos]
 
         # PyGame pour le rendu
         self.screen = None
 
     def generate_maze(self):
-        visited = [[False for _ in range(self.COLS)] for _ in range(self.ROWS)]
+        visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
         stack = []
         current_cell = (0, 0)
         visited[0][0] = True
-        maze = [["1111" for _ in range(self.COLS)] for _ in range(self.ROWS)]
+        maze = [["1111" for _ in range(self.cols)] for _ in range(self.rows)]
 
         while True:
             x, y = current_cell
             neighbors = []
             for direction, (dx, dy) in {"UP": (0, -1), "DOWN": (0, 1), "LEFT": (-1, 0), "RIGHT": (1, 0)}.items():
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < self.COLS and 0 <= ny < self.ROWS and not visited[ny][nx]:
+                if 0 <= nx < self.cols and 0 <= ny < self.rows and not visited[ny][nx]:
                     neighbors.append((nx, ny, direction))
 
             if neighbors:
@@ -70,11 +77,13 @@ class MazeEnv(gym.Env):
 
     def reset(self):
         self.maze = self.generate_maze()
-        self.player_pos = [0, 0]
+        self.agent_pos = [0, 0]
         return self._get_observation()
 
     def step(self, action):
-        x, y = self.player_pos
+        x, y = self.agent_pos
+        previous_pos = self.agent_pos
+        reward = 0
 
         if action == 0 and self.maze[y][x][0] == "0":  # Up
             y -= 1
@@ -85,28 +94,43 @@ class MazeEnv(gym.Env):
         elif action == 3 and self.maze[y][x][3] == "0":  # Right
             x += 1
 
-        self.player_pos = [x, y]
+        self.agent_pos = [x, y]
 
-        done = self.player_pos == self.target_pos
-        reward = 1 if done else -0.01  # Récompense positive pour atteindre la cible, légère pénalité sinon
+        done = self.agent_pos == self.target_pos
+        min_go_back = self.cell_size // 2
+        # Récompense : 1 si l'épisode est terminé, sinon appel de la fonction compute_reward
+        if done:
+            reward = 1
+        elif len(self.path) > min_go_back and self.agent_pos in self.path[:-min_go_back]:  # Si l'agent revient sur ses pas, récompense négative : évite les boucles ou le blocage
+            reward = -0.2
+        else:
+            reward += self.compute_reward(previous_pos, self.agent_pos)
 
         return self._get_observation(), reward, done, {}
+
+    def compute_reward(self, previous_pos, new_pos):
+        #Calcul de la récompense en fonction de la distance euclidienne entre la nouvelle position et la position de l'objectif
+
+        dist_new = np.linalg.norm(np.array(new_pos) - np.array(self.target_pos))
+        dist_old = np.linalg.norm(np.array(previous_pos) - np.array(self.target_pos))
+
+        return (dist_old - dist_new) * 0.2
 
     def render(self, mode='human'):
         if self.screen is None:
             pygame.init()
-            self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+            self.screen = pygame.display.set_mode((self.width, self.height))
             pygame.display.set_caption("Labyrinthe Aléatoire")
 
         self.screen.fill((255, 255, 255))
 
-        for y in range(self.ROWS):
-            for x in range(self.COLS):
+        for y in range(self.rows):
+            for x in range(self.cols):
                 self._draw_cell(x, y, (255, 255, 255))
                 self._draw_walls(x, y, self.maze[y][x])
 
         self._draw_cell(self.target_pos[0], self.target_pos[1], (255, 0, 0))
-        self._draw_cell(self.player_pos[0], self.player_pos[1], (0, 0, 255))
+        self._draw_cell(self.agent_pos[0], self.agent_pos[1], (0, 0, 255))
 
         pygame.display.flip()
 
@@ -116,35 +140,35 @@ class MazeEnv(gym.Env):
             self.screen = None
 
     def _get_observation(self):
-        obs = np.zeros((self.ROWS, self.COLS, 1), dtype=np.float32)
-        obs[self.player_pos[1]][self.player_pos[0]][0] = 1  # Marquer la position du joueur
+        obs = np.zeros((self.rows, self.cols, 1), dtype=np.float32)
+        obs[self.agent_pos[1]][self.agent_pos[0]][0] = 1  # Marquer la position du joueur
         return obs
 
     def _draw_cell(self, x, y, color):
         pygame.draw.rect(
-            self.screen, color, (x * self.CELL_SIZE, y * self.CELL_SIZE, self.CELL_SIZE, self.CELL_SIZE)
+            self.screen, color, (x * self.cell_size, y * self.cell_size, self.cell_size, self.cell_size)
         )
 
     def _draw_walls(self, x, y, walls):
         if walls[0] == "1":
             pygame.draw.line(
-                self.screen, (0, 0, 0), (x * self.CELL_SIZE, y * self.CELL_SIZE),
-                ((x + 1) * self.CELL_SIZE, y * self.CELL_SIZE), 2
+                self.screen, (0, 0, 0), (x * self.cell_size, y * self.cell_size),
+                ((x + 1) * self.cell_size, y * self.cell_size), 2
             )
         if walls[1] == "1":
             pygame.draw.line(
-                self.screen, (0, 0, 0), (x * self.CELL_SIZE, (y + 1) * self.CELL_SIZE),
-                ((x + 1) * self.CELL_SIZE, (y + 1) * self.CELL_SIZE), 2
+                self.screen, (0, 0, 0), (x * self.cell_size, (y + 1) * self.cell_size),
+                ((x + 1) * self.cell_size, (y + 1) * self.cell_size), 2
             )
         if walls[2] == "1":
             pygame.draw.line(
-                self.screen, (0, 0, 0), (x * self.CELL_SIZE, y * self.CELL_SIZE),
-                (x * self.CELL_SIZE, (y + 1) * self.CELL_SIZE), 2
+                self.screen, (0, 0, 0), (x * self.cell_size, y * self.cell_size),
+                (x * self.cell_size, (y + 1) * self.cell_size), 2
             )
         if walls[3] == "1":
             pygame.draw.line(
-                self.screen, (0, 0, 0), ((x + 1) * self.CELL_SIZE, y * self.CELL_SIZE),
-                ((x + 1) * self.CELL_SIZE, (y + 1) * self.CELL_SIZE), 2
+                self.screen, (0, 0, 0), ((x + 1) * self.cell_size, y * self.cell_size),
+                ((x + 1) * self.cell_size, (y + 1) * self.cell_size), 2
             )
 
 # Pour tester l'environnement
