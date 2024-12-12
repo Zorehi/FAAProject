@@ -1,7 +1,7 @@
 Le projet est découpé en 3 fichiers :
 
 Maze_env.py : contient la classe MazeEnv qui permet de créer un environnement de labyrinthe.
-    La fonction à changer est "generate_obstacles" : elle reonvoie une liste d'obstacles à placer dans le labyrinthe.
+    La fonction à changer est "generate_obstacles" : elle renvoie une liste d'obstacles à placer dans le labyrinthe.
     Format d'une liste de tuples : ex [(1,2), (3,4), (5,6)]
 
 Q_learning.py : contient les fonctions (basées sur l'algorithme QLearning) qui permet d'entrainer un agent à trouver la sortie du labyrinthe.
