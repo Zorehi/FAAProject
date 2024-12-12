@@ -1,8 +1,7 @@
 import numpy as np
 import random
-import matplotlib.pyplot as plt
 import time
-from Maze_env import Maze_env  
+
 
 # Paramètres Q-Learning
 alpha = 0.1  # Taux d'apprentissage
@@ -54,36 +53,5 @@ def train_q_learning(env, plot_rewards=False, show_path=False):
         
     print("Entraînement terminé.")
 
-    if plot_rewards:
-        plotting_rewards()
-    if show_path:
-        showing_path()
-
     return q_table
 
-def plotting_rewards():
-    """Afficher les récompenses par épisode."""
-
-    plt.plot(range(episodes), rewards_per_episode)
-    plt.xlabel("Épisodes")
-    plt.ylabel("Récompense cumulée")
-    plt.title("Évolution de la récompense cumulée pendant l'apprentissage")
-    plt.show()
-
-def showing_path():
-    action_symbols = ['↑', '↓', '←', '→']  # Symboles pour les actions (haut, bas, gauche, droite)
-
-    print("Politique optimale apprise :")
-    for y in range(env.grid_size[0]):
-        row = ""
-        for x in range(env.grid_size[1]):
-            if (y, x) == env.start_pos:
-                row += " S "  # Position de départ
-            elif (y, x) == env.goal_pos:
-                row += " G "  # Objectif
-            elif env.state[y, x] == -1:  # Obstacles
-                row += " X "
-            else:
-                action = np.argmax(q_table[y, x])  # Meilleure action selon Q-Table
-                row += f" {action_symbols[action]} "
-    print(row)

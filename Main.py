@@ -1,5 +1,5 @@
 from Maze_env import Maze_env
-from training_RL import train_q_learning
+from Q_learning import train_q_learning
 import pygame
 import numpy as np
 
@@ -7,7 +7,6 @@ Q = True
 
 if __name__ == "__main__":
     env = Maze_env()
-    state = env.reset()
     state_pos = env.agent_pos
     done = False
 
