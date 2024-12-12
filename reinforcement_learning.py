@@ -4,6 +4,7 @@ import time
 import matplotlib.pyplot as plt
 import pygame
 import sys
+import matplotlib.image as mpimg
 
 # Paramètres Q-Learning
 ALPHA = 0.1  # Taux d'apprentissage
@@ -19,9 +20,12 @@ def choose_action(state, epsilon, env, q_table):
         y, x = state
         return np.argmax(q_table[y, x])  # Exploitation
 
-def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODES, plot_rewards=False, show_training=False):
+def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODES, show_training=False):
     q_table = np.zeros((env.grid_size[0], env.grid_size[1], env.action_space.n))  # Table Q
     rewards_per_episode = []  # Récompenses par épisode
+
+    if show_training:
+        env.setup_pygame()
 
     """Entraîner l'agent avec l'algorithme Q-Learning."""
     for episode in range(episodes):
@@ -47,7 +51,6 @@ def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EP
 
             # Affichage temps réel tous les N épisodes
             if show_training:
-                env.setup_pygame()
                 if (episode + 1) % 10 == 0:  # Afficher tous les 10 épisodes
                     env.render()
                     time.sleep(0.1)  # Pause pour observer (ajustable)
@@ -55,22 +58,21 @@ def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EP
         rewards_per_episode.append(total_reward)  # Enregistrer la récompense totale
         #print(f"Épisode {episode + 1}/{episodes} - Récompense : {total_reward}")
         
-    print("Entraînement Q terminé.")
-    pygame.display.quit()  # Quitter proprement Pygame après affichage
+    #print("Entraînement Q-learning terminé.")
+
+    return q_table, rewards_per_episode
 
 
-    if plot_rewards:
-        plotting_rewards(rewards_per_episode)
-
-    return q_table
-
-def train_sarsa(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODES, plot_rewards=False, show_training=False):
+def train_sarsa(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODES, show_training=False):
     """
     Entraîne l'agent avec l'algorithme SARSA.
     Retourne la Q-Table entraînée et les récompenses cumulées.
     """
     q_table = np.zeros((env.grid_size[0], env.grid_size[1], env.action_space.n))  # Initialisation de la Q-Table
     rewards_per_episode = []  # Stockage des récompenses
+
+    if show_training:
+        env.setup_pygame()
 
     for episode in range(episodes):
         state = env.reset()
@@ -95,14 +97,21 @@ def train_sarsa(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODE
             action = next_action  # Mettre à jour l'action
             total_reward += reward
 
+            if show_training:
+                #env.setup_pygame()
+                if (episode + 1) % 10 == 0:  # Afficher tous les 10 épisodes
+                    env.render()
+                    time.sleep(0.1)  # Pause pour observer (ajustable)
+
         rewards_per_episode.append(total_reward)  # Enregistrer la récompense totale de l'épisode
         #print(f"Épisode {episode + 1}/{episodes} - Récompense : {total_reward}")
 
-    print("Entraînement SARSA terminé.")
+    #print("Entraînement SARSA terminé.")
 
-    return q_table
+    return q_table, rewards_per_episode
 
-def show_final_solution(env, q_table):
+
+def show_final_solution(env, q_table, learnin_type):
     """
     Affiche la solution finale en utilisant la Q-Table entraînée.
     """
@@ -127,8 +136,19 @@ def show_final_solution(env, q_table):
         env.render()  # Affiche l'environnement après chaque étape
         pygame.time.wait(500)  # Pause pour observer l'exécution (500 ms)
 
+    screen_path = f"final_solution_{learnin_type}.png"
+    env.save_screenshot(filename=screen_path)  # Sauvegarder la solution finale
     pygame.display.quit()  # Quitter proprement Pygame après affichage
 
+
+def show_final_state(learning_type):
+    screen_path = f"final_solution_{learning_type}.png"
+    img = mpimg.imread(screen_path)
+    plt.figure(figsize=(8, 8))
+    plt.imshow(img)
+    plt.axis('off')  # Masquer les axes
+    plt.title("Situation finale de l'agent")
+    plt.show()
 
 
 def plotting_rewards(rewards):
@@ -144,3 +164,5 @@ def plotting_rewards(rewards):
     plt.show()
 
 
+def best_worst_rewards(rewards):
+    return max(rewards), min(rewards)

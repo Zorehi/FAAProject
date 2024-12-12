@@ -106,7 +106,7 @@ class Maze_env(gym.Env):
         dist_new = np.linalg.norm(np.array(new_pos) - np.array(self.goal_pos))
         dist_old = np.linalg.norm(np.array(previous_pos) - np.array(self.goal_pos))
 
-        return (dist_old - dist_new)*0.2
+        return (dist_old - dist_new)*0.5
 
     def render(self, mode='human'):
         #Fonction pour afficher l'environnement avec Pygame
@@ -115,6 +115,11 @@ class Maze_env(gym.Env):
         for y in range(self.grid_size[0]):
             for x in range(self.grid_size[1]):
                 rect = pygame.Rect(x * self.cell_size, y * self.cell_size, self.cell_size, self.cell_size)
+
+                # Dessiner les cases visitées en jaune
+                if (y, x) in self.path:
+                    pygame.draw.rect(self.screen, (255, 255, 0), rect)  # Jaune pour le chemin
+
                 if self.state[y, x] == -1:  # Obstacle
                     pygame.draw.rect(self.screen, (0, 0, 0), rect)  # Noir pour les obstacles
                 elif (y, x) == self.agent_pos:
@@ -124,6 +129,10 @@ class Maze_env(gym.Env):
                 else:
                     pygame.draw.rect(self.screen, (200, 200, 200), rect, 1)  # Gris pour la grille
         pygame.display.flip()
+
+    def save_screenshot(self, filename="final_solution.png"):
+        #Fonction pour sauvegarder une capture d'écran de l'environnement
+        pygame.image.save(self.screen, filename)
 
     def close(self):
         if self.use_pygame:
