@@ -1,5 +1,5 @@
 from Maze_env import Maze_env
-from Q_learning import train_q_learning
+from reinforcement_learning import train_q_learning
 import pygame
 import numpy as np
 
