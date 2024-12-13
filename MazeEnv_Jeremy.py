@@ -6,7 +6,7 @@ import pygame
 import random
 
 WIDTH, HEIGHT = 800, 600
-CELL_SIZE = 40
+CELL_SIZE = 20
 START_POS = (0, 0)
 
 class MazeEnv(gym.Env):
@@ -76,15 +76,15 @@ class MazeEnv(gym.Env):
         return maze
 
     def reset(self):
-        self.maze = self.generate_maze()
-        self.agent_pos = [0, 0]
+        self.agent_pos = self.start_pos
+        self.path = [self.agent_pos]
         return self._get_observation()
 
     def step(self, action):
         x, y = self.agent_pos
         previous_pos = self.agent_pos
-        reward = 0
 
+        # Mise à jour de la position de l'agent en fonction de l'action et des murs
         if action == 0 and self.maze[y][x][0] == "0":  # Up
             y -= 1
         elif action == 1 and self.maze[y][x][1] == "0":  # Down
@@ -96,25 +96,35 @@ class MazeEnv(gym.Env):
 
         self.agent_pos = [x, y]
 
+        # Vérification de l'état final
         done = self.agent_pos == self.target_pos
-        min_go_back = self.cell_size // 2
-        # Récompense : 1 si l'épisode est terminé, sinon appel de la fonction compute_reward
+
+        # Gestion des boucles et calcul de la récompense
+        # min_go_back = self.rows // 2
         if done:
-            reward = 1
-        elif len(self.path) > min_go_back and self.agent_pos in self.path[:-min_go_back]:  # Si l'agent revient sur ses pas, récompense négative : évite les boucles ou le blocage
-            reward = -0.2
+            reward = 1.0 # Récompense forte pour atteindre l'objectif
+        elif self.agent_pos in self.path:
+            reward = -0.2  # Pénalité pour revenir sur ses pas
+        elif previous_pos == self.agent_pos:
+            reward = -1.0  # Pénalité pour taper un mur
         else:
-            reward += self.compute_reward(previous_pos, self.agent_pos)
+            reward = self.compute_reward(previous_pos, self.agent_pos)
+
+        # Mise à jour du chemin parcouru
+        if self.agent_pos not in self.path:
+            self.path.append(self.agent_pos)
 
         return self._get_observation(), reward, done, {}
 
     def compute_reward(self, previous_pos, new_pos):
-        #Calcul de la récompense en fonction de la distance euclidienne entre la nouvelle position et la position de l'objectif
-
+        """
+        Calcul de la récompense en fonction de la distance à l'objectif.
+        """
         dist_new = np.linalg.norm(np.array(new_pos) - np.array(self.target_pos))
         dist_old = np.linalg.norm(np.array(previous_pos) - np.array(self.target_pos))
 
-        return (dist_old - dist_new) * 0.2
+        # Calcul de la différence de distance, normalisée par la diagonale maximale
+        return (dist_old - dist_new) * 2 / (self.rows * self.cols)
 
     def render(self, mode='human'):
         if self.screen is None:
@@ -126,9 +136,13 @@ class MazeEnv(gym.Env):
 
         for y in range(self.rows):
             for x in range(self.cols):
-                self._draw_cell(x, y, (255, 255, 255))
+                if [x, y] in self.path:
+                    self._draw_cell(x, y, (255, 255, 0))
+                else:
+                    self._draw_cell(x, y, (255, 255, 255))
                 self._draw_walls(x, y, self.maze[y][x])
 
+        self._draw_cell(self.start_pos[0], self.start_pos[1], (0, 255, 0))
         self._draw_cell(self.target_pos[0], self.target_pos[1], (255, 0, 0))
         self._draw_cell(self.agent_pos[0], self.agent_pos[1], (0, 0, 255))
 

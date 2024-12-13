@@ -4,8 +4,8 @@ import pygame
 import numpy as np
 
 # Un doit être True et l'autre False, si les deux sont True, Q-learning sera executé
-Q = False
-SARSA = True
+Q = True
+SARSA = False
 
 if __name__ == "__main__":
     env = Maze_env()
