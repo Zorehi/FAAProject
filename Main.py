@@ -1,11 +1,13 @@
-from Maze_env import Maze_env
-from reinforcement_learning import train_q_learning, train_sarsa
+from MazeEnv_Jeremy import MazeEnv as Maze_env
+from ReinforcementLearning_Jeremy import train_q_learning, train_sarsa
 import pygame
 import numpy as np
 
 # Un doit être True et l'autre False, si les deux sont True, Q-learning sera executé
-Q = True
-SARSA = False
+Q = False
+SARSA = True
+SHOW_TRAINING = False
+WAITING_TIME = 100
 
 if __name__ == "__main__":
     env = Maze_env()
@@ -13,12 +15,11 @@ if __name__ == "__main__":
     done = False
 
     if Q:
-        q_table_q, _ = train_q_learning(env, show_training=False)
+        q_table_q, _ = train_q_learning(env, show_training=SHOW_TRAINING)
     elif SARSA:
-        q_table_sarsa, _ = train_sarsa(env, show_training=False)
+        q_table_sarsa, _ = train_sarsa(env, show_training=SHOW_TRAINING)
 
-    env.setup_pygame()
-    state = env.reset()
+    env.reset()
     env.render()
 
     while not done:
@@ -28,25 +29,23 @@ if __name__ == "__main__":
 
         if Q :
             if not done:
-                y, x = state_pos
-                action = np.argmax(q_table_q[y, x])  # Exploitation totale
-                state, reward, done = env.step(action)
+                x, y = env.agent_pos
+                action = np.argmax(q_table_q[y, x, :])  # Exploitation totale
+                _, reward, done, _ = env.step(action)
                 env.render()
-                state_pos = env.agent_pos
-                pygame.time.wait(500)  # Wait for 100 milliseconds
+                pygame.time.wait(WAITING_TIME)  # Wait for 100 milliseconds
         elif SARSA:
             if not done:
-                y, x = state_pos
-                action = np.argmax(q_table_sarsa[y, x])
-                state, reward, done = env.step(action)
+                x, y = env.agent_pos
+                action = np.argmax(q_table_sarsa[y, x, :])
+                _, reward, done, _ = env.step(action)
                 env.render()
-                state_pos = env.agent_pos
-                pygame.time.wait(500)
+                pygame.time.wait(WAITING_TIME)
         else :
             if not done:
                 action = env.action_space.sample()  # Random action
-                state, reward, done = env.step(action)
+                _, reward, done, _ = env.step(action)
                 env.render()
-                pygame.time.wait(500)
+                pygame.time.wait(WAITING_TIME)
 
     env.close()
