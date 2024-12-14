@@ -185,6 +185,10 @@ class MazeEnv(gym.Env):
                 ((x + 1) * self.cell_size, (y + 1) * self.cell_size), 2
             )
 
+    def save_screenshot(self, filename="final_solution.png"):
+        #Fonction pour sauvegarder une capture d'écran de l'environnement
+        pygame.image.save(self.screen, filename)
+
 # Pour tester l'environnement
 if __name__ == "__main__":
     env = MazeEnv()

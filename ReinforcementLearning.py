@@ -54,7 +54,7 @@ def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EP
             if show_training:
                 if (episode + 1) % 100 == 0:  # Afficher tous les 10 épisodes
                     env.render()
-                    time.sleep(0.1)  # Pause pour observer (ajustable)
+                    time.sleep(0.005)  # Pause pour observer (ajustable)
 
             if done:
                 break
@@ -105,7 +105,7 @@ def train_sarsa(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODE
                 #env.setup_pygame()
                 if (episode + 1) % 10 == 0:  # Afficher tous les 10 épisodes
                     env.render()
-                    time.sleep(0.1)  # Pause pour observer (ajustable)
+                    time.sleep(0.005)  # Pause pour observer (ajustable)
 
             if done:
                 break
@@ -120,7 +120,7 @@ def train_sarsa(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODE
     return q_table, rewards_per_episode
 
 
-def show_final_solution(env, q_table, learnin_type):
+def show_final_solution(env, q_table, learning_type):
     """
     Affiche la solution finale en utilisant la Q-Table entraînée.
     """
@@ -141,11 +141,11 @@ def show_final_solution(env, q_table, learnin_type):
         _, reward, done, _ = env.step(action)
         state_pos = env.agent_pos
         env.render()  # Affiche l'environnement après chaque étape
-        pygame.time.wait(500)  # Pause pour observer l'exécution (500 ms)
+        pygame.time.wait(100)  # Pause pour observer l'exécution (100 ms)
 
-    screen_path = f"final_solution_{learnin_type}.png"
+    screen_path = f"final_solution_{learning_type}.png"
     env.save_screenshot(filename=screen_path)  # Sauvegarder la solution finale
-    pygame.display.quit()  # Quitter proprement Pygame après affichage
+    #pygame.display.quit()  # Quitter proprement Pygame après affichage
 
 
 def show_final_state(learning_type):

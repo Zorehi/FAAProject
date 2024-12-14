@@ -1,11 +1,11 @@
-from MazeEnv_Jeremy import MazeEnv as Maze_env
-from ReinforcementLearning_Jeremy import train_q_learning, train_sarsa
+from MazeEnv import MazeEnv as Maze_env
+from ReinforcementLearning import train_q_learning, train_sarsa
 import pygame
 import numpy as np
 
 # Un doit être True et l'autre False, si les deux sont True, Q-learning sera executé
-Q = False
-SARSA = True
+Q = True
+SARSA = False
 SHOW_TRAINING = False
 WAITING_TIME = 100
 
