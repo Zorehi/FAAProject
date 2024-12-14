@@ -71,8 +71,7 @@ def train_q_learning(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EP
 
 def train_sarsa(env, alpha=ALPHA, gamma=GAMMA, epsilon=EPSILON, episodes=EPISODES, show_training=False):
     """
-    Entraîne l'agent avec l'algorithme SARSA.
-    Retourne la Q-Table entraînée et les récompenses cumulées.
+    Entraîne l'agent avec l'algorithme SARSA
     """
     q_table = np.zeros((env.rows, env.cols, env.action_space.n))  # Initialisation de la Q-Table
     rewards_per_episode = []  # Stockage des récompenses
@@ -145,7 +144,6 @@ def show_final_solution(env, q_table, learning_type):
 
     screen_path = f"final_solution_{learning_type}.png"
     env.save_screenshot(filename=screen_path)  # Sauvegarder la solution finale
-    #pygame.display.quit()  # Quitter proprement Pygame après affichage
 
 
 def show_final_state(learning_type):
@@ -169,7 +167,3 @@ def plotting_rewards(rewards):
     plt.grid(True)
     plt.legend()
     plt.show()
-
-
-def best_worst_rewards(rewards):
-    return max(rewards), min(rewards)

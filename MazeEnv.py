@@ -5,11 +5,13 @@ import numpy as np
 import pygame
 import random
 
+# Dimensions de la fenêtre et des cellules
 WIDTH, HEIGHT = 800, 600
 CELL_SIZE = 20
 START_POS = (0, 0)
 
 class MazeEnv(gym.Env):
+    ''' Environnement de labyrinthe pour l'apprentissage par renforcement. '''
     def __init__(self):
         super(MazeEnv, self).__init__()
 
@@ -26,20 +28,21 @@ class MazeEnv(gym.Env):
         )
 
         # Initialisation de l'état
-        self.maze = self.generate_maze()
-        self.agent_pos = [0, 0]  # Position initiale
-        self.target_pos = [self.cols - 1, self.rows - 1]  # Cible
-        self.path = [self.agent_pos]
+        self.maze = self.generate_maze()  # Génère un labyrinthe aléatoire
+        self.agent_pos = [0, 0]  # Position initiale de l'agent
+        self.target_pos = [self.cols - 1, self.rows - 1]  # Position de la cible
+        self.path = [self.agent_pos]  # Chemin parcouru par l'agent
 
         # PyGame pour le rendu
         self.screen = None
 
     def generate_maze(self):
+        """ Génère un labyrinthe aléatoire en utilisant l'algorithme de génération de labyrinthe de Prim. """
         visited = [[False for _ in range(self.cols)] for _ in range(self.rows)]
         stack = []
         current_cell = (0, 0)
         visited[0][0] = True
-        maze = [["1111" for _ in range(self.cols)] for _ in range(self.rows)]
+        maze = [["1111" for _ in range(self.cols)] for _ in range(self.rows)]  # Initialisation des murs
 
         while True:
             x, y = current_cell
@@ -76,11 +79,13 @@ class MazeEnv(gym.Env):
         return maze
 
     def reset(self):
+        """ Réinitialise l'environnement à l'état initial. """
         self.agent_pos = self.start_pos
         self.path = [self.agent_pos]
         return self._get_observation()
 
     def step(self, action):
+        """ Met à jour l'état de l'environnement en fonction de l'action de l'agent. """
         x, y = self.agent_pos
         previous_pos = self.agent_pos
 
@@ -100,9 +105,8 @@ class MazeEnv(gym.Env):
         done = self.agent_pos == self.target_pos
 
         # Gestion des boucles et calcul de la récompense
-        # min_go_back = self.rows // 2
         if done:
-            reward = 1.0 # Récompense forte pour atteindre l'objectif
+            reward = 1.0  # Récompense forte pour atteindre l'objectif
         elif self.agent_pos in self.path:
             reward = -0.2  # Pénalité pour revenir sur ses pas
         elif previous_pos == self.agent_pos:
@@ -127,43 +131,48 @@ class MazeEnv(gym.Env):
         return (dist_old - dist_new) * 2 / (self.rows * self.cols)
 
     def render(self, mode='human'):
+        """ Affiche l'état actuel de l'environnement à l'aide de PyGame. """
         if self.screen is None:
             pygame.init()
             self.screen = pygame.display.set_mode((self.width, self.height))
             pygame.display.set_caption("Labyrinthe Aléatoire")
 
-        self.screen.fill((255, 255, 255))
+        self.screen.fill((255, 255, 255))  # Fond blanc
 
         for y in range(self.rows):
             for x in range(self.cols):
                 if [x, y] in self.path:
-                    self._draw_cell(x, y, (255, 255, 0))
+                    self._draw_cell(x, y, (255, 255, 0))  # Jaune pour le chemin parcouru
                 else:
-                    self._draw_cell(x, y, (255, 255, 255))
+                    self._draw_cell(x, y, (255, 255, 255))  # Blanc pour les autres cellules
                 self._draw_walls(x, y, self.maze[y][x])
 
-        self._draw_cell(self.start_pos[0], self.start_pos[1], (0, 255, 0))
-        self._draw_cell(self.target_pos[0], self.target_pos[1], (255, 0, 0))
-        self._draw_cell(self.agent_pos[0], self.agent_pos[1], (0, 0, 255))
+        self._draw_cell(self.start_pos[0], self.start_pos[1], (0, 255, 0))  # Vert pour la position de départ
+        self._draw_cell(self.target_pos[0], self.target_pos[1], (255, 0, 0))  # Rouge pour la cible
+        self._draw_cell(self.agent_pos[0], self.agent_pos[1], (0, 0, 255))  # Bleu pour l'agent
 
         pygame.display.flip()
 
     def close(self):
+        """ Ferme l'environnement PyGame. """
         if self.screen:
             pygame.quit()
             self.screen = None
 
     def _get_observation(self):
+        """ Retourne l'observation actuelle de l'environnement. """
         obs = np.zeros((self.rows, self.cols, 1), dtype=np.float32)
         obs[self.agent_pos[1]][self.agent_pos[0]][0] = 1  # Marquer la position du joueur
         return obs
 
     def _draw_cell(self, x, y, color):
+        """ Dessine une cellule du labyrinthe. """
         pygame.draw.rect(
             self.screen, color, (x * self.cell_size, y * self.cell_size, self.cell_size, self.cell_size)
         )
 
     def _draw_walls(self, x, y, walls):
+        """ Dessine les murs d'une cellule du labyrinthe. """
         if walls[0] == "1":
             pygame.draw.line(
                 self.screen, (0, 0, 0), (x * self.cell_size, y * self.cell_size),
@@ -186,7 +195,7 @@ class MazeEnv(gym.Env):
             )
 
     def save_screenshot(self, filename="final_solution.png"):
-        #Fonction pour sauvegarder une capture d'écran de l'environnement
+        """ Fonction pour sauvegarder une capture d'écran de l'environnement. """
         pygame.image.save(self.screen, filename)
 
 # Pour tester l'environnement
@@ -196,8 +205,13 @@ if __name__ == "__main__":
     done = False
 
     while not done:
-        action = env.action_space.sample()
-        obs, reward, done, info = env.step(action)
-        env.render()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                done = True
+
+        if not done:
+            action = env.action_space.sample()  # Action aléatoire
+            obs, reward, done, info = env.step(action)
+            env.render()
 
     env.close()
